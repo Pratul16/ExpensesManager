@@ -44,8 +44,9 @@ MAKE IT YOURS
 • Profile with photo, name and birthday
 
 SAFE AND PRIVATE
-• No account needed, and the app has no internet access at all
+• No account needed: your expenses, bills and profile never leave your phone
 • No ads, no analytics, no data collection
+• Every feature is free. An optional "Buy me a coffee" tip is there if you'd like to support the app
 • Recycle bin: restore anything you deleted
 • Export a full backup (bills included) and import it on any phone
 • Export to Excel/CSV for spreadsheets
@@ -55,7 +56,7 @@ SAFE AND PRIVATE
 ## Category and contact
 - **App category:** Finance
 - **Tags (pick up to 5 that Play offers):** Budget, Personal finance, Expense tracker, Money manager
-- **Contact email (shown publicly):** ppratulgupta@gmail.com
+- **Contact email (shown publicly):** pratulkhandelwal16@gmail.com
 - **Privacy policy URL:** the public address where you host `privacy-policy.html` (see README)
 
 ## Graphics (in this folder)

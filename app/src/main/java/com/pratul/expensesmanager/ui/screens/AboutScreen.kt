@@ -10,6 +10,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,10 +22,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,7 +39,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.pratul.expensesmanager.R
+import com.pratul.expensesmanager.billing.TipJar
+import com.pratul.expensesmanager.billing.TipJarState
 import com.pratul.expensesmanager.ui.components.GradientCard
+import com.pratul.expensesmanager.util.findActivity
 
 /** App version and the developer's details, from res/values/strings.xml. */
 @Composable
@@ -87,6 +95,8 @@ fun AboutScreen(onBack: () -> Unit) {
                 }
             }
 
+            TipCard()
+
             Card(Modifier.fillMaxWidth()) {
                 if (email.isNotBlank()) {
                     MenuRow(
@@ -127,6 +137,67 @@ fun AboutScreen(onBack: () -> Unit) {
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
             )
+        }
+    }
+}
+
+/** The app's tip jar, provided by the app's root. Null in previews. */
+val LocalTipJar = compositionLocalOf<TipJar?> { null }
+
+/** "Buy me a coffee": tip sizes with Google Play prices, or why tips aren't available here. */
+@Composable
+private fun TipCard() {
+    val tipJar = LocalTipJar.current ?: return
+    // Reconnect each time the page opens, in case Google Play was unavailable earlier
+    LaunchedEffect(tipJar) { tipJar.connect() }
+    val context = LocalContext.current
+
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp)) {
+            Text("Buy me a coffee ☕", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "Enjoying the app? A small tip keeps it ad-free and growing. Totally optional, and every feature stays free.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(12.dp))
+            when (val state = tipJar.state) {
+                TipJarState.Loading -> Text("Loading prices…", style = MaterialTheme.typography.bodySmall)
+                is TipJarState.Unavailable -> Text(
+                    state.message,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                is TipJarState.Ready -> Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    for (option in state.options) {
+                        FilledTonalButton(
+                            onClick = { context.findActivity()?.let { tipJar.buy(it, option) } },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(16.dp),
+                            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 10.dp)
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(option.emoji, style = MaterialTheme.typography.titleLarge)
+                                Text(option.title, style = MaterialTheme.typography.labelMedium, maxLines = 1, textAlign = TextAlign.Center)
+                                Text(option.price, style = MaterialTheme.typography.titleSmall, maxLines = 1)
+                            }
+                        }
+                    }
+                }
+            }
+            if (tipJar.hasPendingTip) {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "⏳ A tip is waiting for payment approval. It completes automatically once approved.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            if (tipJar.completedTips > 0) {
+                Spacer(Modifier.height(8.dp))
+                Text("💜 Thank you for your support!", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
+            }
         }
     }
 }

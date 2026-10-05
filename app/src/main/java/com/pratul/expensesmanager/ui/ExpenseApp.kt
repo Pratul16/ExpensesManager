@@ -27,6 +27,8 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
@@ -43,6 +45,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.pratul.expensesmanager.R
+import com.pratul.expensesmanager.billing.TipJar
 import com.pratul.expensesmanager.data.ThemeMode
 import com.pratul.expensesmanager.data.defaultEmojiFor
 import com.pratul.expensesmanager.ui.components.AddExpenseDialog
@@ -50,6 +53,7 @@ import com.pratul.expensesmanager.ui.components.ConfettiBurst
 import com.pratul.expensesmanager.ui.components.LocalCatalog
 import com.pratul.expensesmanager.ui.components.LocalQuickAdd
 import com.pratul.expensesmanager.ui.components.LocalSetBill
+import com.pratul.expensesmanager.ui.screens.LocalTipJar
 import com.pratul.expensesmanager.ui.screens.AccountScreen
 import com.pratul.expensesmanager.ui.screens.CompareScreen
 import com.pratul.expensesmanager.ui.screens.MonthScreen
@@ -81,11 +85,33 @@ fun ExpenseApp(themeMode: ThemeMode, onThemeModeChange: (ThemeMode) -> Unit) {
     val scope = rememberCoroutineScope()
     val haptics = LocalHapticFeedback.current
 
+    // Tips through Google Play; connecting at start also completes tips approved while the app was closed
+    val tipJar = remember { TipJar(context) }
+    DisposableEffect(tipJar) {
+        tipJar.connect()
+        onDispose { tipJar.close() }
+    }
+    LaunchedEffect(tipJar.completedTips) {
+        if (tipJar.completedTips > 0) {
+            haptics.performHapticFeedback(HapticFeedbackType.Confirm)
+            confetti++
+            snackbar.currentSnackbarData?.dismiss()
+            snackbar.showSnackbar("Thank you so much for the tip! ☕💜")
+        }
+    }
+    LaunchedEffect(tipJar.problem) {
+        tipJar.problem?.let {
+            snackbar.showSnackbar(it)
+            tipJar.problem = null
+        }
+    }
+
     CompositionLocalProvider(
         LocalCatalog provides state.catalog,
         LocalQuickAdd provides { category, item -> addRequest = AddRequest(category, item) },
         LocalQuickAdd provides { category, item -> addRequest = AddRequest(category, item) },
-        LocalSetBill provides state::setBill
+        LocalSetBill provides state::setBill,
+        LocalTipJar provides tipJar
     ) {
         Box(Modifier.fillMaxSize()) {
             Scaffold(

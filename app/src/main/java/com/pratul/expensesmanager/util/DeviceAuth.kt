@@ -1,9 +1,7 @@
 package com.pratul.expensesmanager.util
 
-import android.app.Activity
 import android.app.KeyguardManager
 import android.content.Context
-import android.content.ContextWrapper
 import android.hardware.biometrics.BiometricManager
 import android.hardware.biometrics.BiometricPrompt
 import android.os.Build
@@ -49,14 +47,5 @@ object DeviceAuth {
                 }
             }
         )
-    }
-
-    private fun Context.findActivity(): Activity? {
-        var c: Context? = this
-        while (c is ContextWrapper) {
-            if (c is Activity) return c
-            c = c.baseContext
-        }
-        return null
     }
 }
