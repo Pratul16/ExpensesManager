@@ -1,0 +1,319 @@
+package com.pratul.expensesmanager
+
+import android.content.Context
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import com.pratul.expensesmanager.ui.theme.ExpensesManagerTheme
+import org.json.JSONArray
+import org.json.JSONObject
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
+
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setContent {
+            ExpensesManagerTheme {
+                ExpenseApp()
+            }
+        }
+    }
+}
+
+// ---------- Data ----------
+
+data class Expense(
+    val id: Long,
+    val amount: Double,
+    val category: String,
+    val note: String,
+    val dateMillis: Long
+)
+
+val categories = listOf(
+    "Food", "Groceries", "Transport", "Bills", "Shopping",
+    "Health", "Entertainment", "Other"
+)
+
+fun loadExpenses(context: Context): List<Expense> {
+    val prefs = context.getSharedPreferences("expenses", Context.MODE_PRIVATE)
+    val text = prefs.getString("list", "[]") ?: "[]"
+    val result = mutableListOf<Expense>()
+    try {
+        val array = JSONArray(text)
+        for (i in 0 until array.length()) {
+            val o = array.getJSONObject(i)
+            result.add(
+                Expense(
+                    id = o.getLong("id"),
+                    amount = o.getDouble("amount"),
+                    category = o.getString("category"),
+                    note = o.optString("note", ""),
+                    dateMillis = o.getLong("date")
+                )
+            )
+        }
+    } catch (e: Exception) {
+        // If saved data is unreadable, start with an empty list
+    }
+    return result
+}
+
+fun saveExpenses(context: Context, expenses: List<Expense>) {
+    val array = JSONArray()
+    for (e in expenses) {
+        val o = JSONObject()
+        o.put("id", e.id)
+        o.put("amount", e.amount)
+        o.put("category", e.category)
+        o.put("note", e.note)
+        o.put("date", e.dateMillis)
+        array.put(o)
+    }
+    context.getSharedPreferences("expenses", Context.MODE_PRIVATE)
+        .edit()
+        .putString("list", array.toString())
+        .apply()
+}
+
+fun formatMoney(amount: Double): String =
+    "₹" + String.format(Locale.getDefault(), "%,.2f", amount)
+
+fun formatDate(millis: Long): String =
+    SimpleDateFormat("d MMM yyyy", Locale.getDefault()).format(Date(millis))
+
+fun isThisMonth(millis: Long): Boolean {
+    val now = Calendar.getInstance()
+    val then = Calendar.getInstance()
+    then.timeInMillis = millis
+    return now.get(Calendar.YEAR) == then.get(Calendar.YEAR) &&
+            now.get(Calendar.MONTH) == then.get(Calendar.MONTH)
+}
+
+// ---------- Screens ----------
+
+@Composable
+fun ExpenseApp() {
+    val context = LocalContext.current
+    var expenses by remember { mutableStateOf(loadExpenses(context)) }
+    var showAddDialog by remember { mutableStateOf(false) }
+
+    val monthTotal = expenses.filter { isThisMonth(it.dateMillis) }.sumOf { it.amount }
+    val monthName = SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(Date())
+
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        floatingActionButton = {
+            ExtendedFloatingActionButton(onClick = { showAddDialog = true }) {
+                Text("+ Add expense")
+            }
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .padding(horizontal = 16.dp)
+                .fillMaxSize()
+        ) {
+            Spacer(Modifier.height(16.dp))
+            Text(
+                text = "Expenses Manager",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(Modifier.height(16.dp))
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                )
+            ) {
+                Column(Modifier.padding(20.dp)) {
+                    Text("Spent in $monthName", style = MaterialTheme.typography.bodyMedium)
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = formatMoney(monthTotal),
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(20.dp))
+            Text("All expenses", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(8.dp))
+
+            if (expenses.isEmpty()) {
+                Text(
+                    text = "No expenses yet. Tap \"+ Add expense\" to add your first one.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(top = 24.dp)
+                )
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(expenses.sortedByDescending { it.dateMillis }, key = { it.id }) { expense ->
+                        ExpenseRow(
+                            expense = expense,
+                            onDelete = {
+                                expenses = expenses.filter { it.id != expense.id }
+                                saveExpenses(context, expenses)
+                            }
+                        )
+                    }
+                    item { Spacer(Modifier.height(88.dp)) }
+                }
+            }
+        }
+    }
+
+    if (showAddDialog) {
+        AddExpenseDialog(
+            onDismiss = { showAddDialog = false },
+            onSave = { amount, category, note ->
+                val now = System.currentTimeMillis()
+                expenses = expenses + Expense(now, amount, category, note, now)
+                saveExpenses(context, expenses)
+                showAddDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+fun ExpenseRow(expense: Expense, onDelete: () -> Unit) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 12.dp, end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(expense.category, fontWeight = FontWeight.SemiBold)
+                val details = if (expense.note.isBlank()) {
+                    formatDate(expense.dateMillis)
+                } else {
+                    expense.note + " • " + formatDate(expense.dateMillis)
+                }
+                Text(details, style = MaterialTheme.typography.bodySmall)
+            }
+            Text(formatMoney(expense.amount), fontWeight = FontWeight.Bold)
+            TextButton(onClick = onDelete) { Text("Delete") }
+        }
+    }
+}
+
+@Composable
+fun AddExpenseDialog(
+    onDismiss: () -> Unit,
+    onSave: (Double, String, String) -> Unit
+) {
+    var amountText by remember { mutableStateOf("") }
+    var category by remember { mutableStateOf(categories[0]) }
+    var note by remember { mutableStateOf("") }
+    var showError by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Add expense") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = amountText,
+                    onValueChange = {
+                        amountText = it
+                        showError = false
+                    },
+                    label = { Text("Amount (₹)") },
+                    singleLine = true,
+                    isError = showError,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                if (showError) {
+                    Text(
+                        text = "Enter a valid amount",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+                Spacer(Modifier.height(12.dp))
+                Text("Category", style = MaterialTheme.typography.bodyMedium)
+                Row(
+                    modifier = Modifier.horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    for (c in categories) {
+                        FilterChip(
+                            selected = category == c,
+                            onClick = { category = c },
+                            label = { Text(c) }
+                        )
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = note,
+                    onValueChange = { note = it },
+                    label = { Text("Note (optional)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                val amount = amountText.trim().toDoubleOrNull()
+                if (amount == null || amount <= 0) {
+                    showError = true
+                } else {
+                    onSave(amount, category, note.trim())
+                }
+            }) { Text("Save") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        }
+    )
+}
