@@ -83,6 +83,10 @@ import kotlinx.coroutines.launch
 
 private enum class AccountPage { Home, Categories, Bin }
 
+// Google sign-in is hidden for the first Play Store release: the app works fully without it,
+// and it needs a Google Cloud client ID before it can work. Set to true once that is set up.
+private const val SHOW_GOOGLE_SIGN_IN = false
+
 @Composable
 fun AccountScreen(state: AppState, themeMode: ThemeMode, onThemeModeChange: (ThemeMode) -> Unit) {
     var page by rememberSaveable { mutableStateOf(AccountPage.Home) }
@@ -193,7 +197,7 @@ private fun AccountHome(
         DataCard(state, onProfileReplaced = { profile = ProfileStore.load(context) })
 
         // ---------- Google (optional) ----------
-        key(wipeCount) {
+        if (SHOW_GOOGLE_SIGN_IN) key(wipeCount) {
             GoogleAccountCard(
                 onSignedIn = { name -> if (profile.name.isBlank()) saveProfile(profile.copy(name = name)) }
             )
