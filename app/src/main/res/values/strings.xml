@@ -3,4 +3,11 @@
     <!-- Web client ID from Google Cloud Console (APIs & Services > Credentials).
          Google sign-in stays disabled until this is filled in. -->
     <string name="google_web_client_id" translatable="false">PASTE_YOUR_WEB_CLIENT_ID_HERE</string>
+
+    <!-- Shown on the "About & developer" page (Profile tab). Leave a value empty to hide its row. -->
+    <string name="developer_name" translatable="false">Pratul</string>
+    <string name="developer_email" translatable="false">ppratulgupta@gmail.com</string>
+    <string name="developer_tagline" translatable="false">Independent developer. Built Expenses Manager to make tracking money simple, private and a bit fun.</string>
+    <!-- Public address of the privacy policy, e.g. https://sites.google.com/view/… -->
+    <string name="privacy_policy_url" translatable="false"></string>
 </resources>

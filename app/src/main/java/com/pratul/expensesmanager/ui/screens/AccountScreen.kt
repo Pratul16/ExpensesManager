@@ -81,7 +81,7 @@ import com.pratul.expensesmanager.util.ageFrom
 import com.pratul.expensesmanager.util.formatPickerDate
 import kotlinx.coroutines.launch
 
-private enum class AccountPage { Home, Categories, Bin }
+private enum class AccountPage { Home, Categories, Bin, About }
 
 // Google sign-in is hidden for the first Play Store release: the app works fully without it,
 // and it needs a Google Cloud client ID before it can work. Set to true once that is set up.
@@ -96,6 +96,7 @@ fun AccountScreen(state: AppState, themeMode: ThemeMode, onThemeModeChange: (The
         AccountPage.Home -> AccountHome(state, themeMode, onThemeModeChange, onOpen = { page = it })
         AccountPage.Categories -> ManageCategoriesScreen(state, onBack = { page = AccountPage.Home })
         AccountPage.Bin -> RecycleBinScreen(state, onBack = { page = AccountPage.Home })
+        AccountPage.About -> AboutScreen(onBack = { page = AccountPage.Home })
     }
 }
 
@@ -190,6 +191,13 @@ private fun AccountHome(
                 title = "Recycle bin",
                 subtitle = if (state.bin.isEmpty()) "Empty" else "${state.bin.size} deleted · tap to restore",
                 onClick = { onOpen(AccountPage.Bin) }
+            )
+            HorizontalDivider(Modifier.padding(start = 56.dp))
+            MenuRow(
+                icon = R.drawable.ic_info,
+                title = "About & developer",
+                subtitle = "Version ${appVersion(context)} · contact and feedback",
+                onClick = { onOpen(AccountPage.About) }
             )
         }
 
