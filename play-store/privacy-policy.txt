@@ -1,0 +1,61 @@
+Privacy Policy
+
+Expenses Manager (Android app) · Effective 5 October 2026
+
+In short: Expenses Manager keeps everything on your phone. Your expenses, bills and profile are never sent anywhere. There is no account to sign up for, no ads and no analytics, and we do not collect, sell or share your data. The only time the app goes online is if you choose to leave an optional tip, which Google Play handles.
+
+Who we are
+
+Expenses Manager is made by Pratul, an independent developer ("we", "us"). You can contact us at pratulkhandelwal16@gmail.com.
+
+What the app stores, and where
+
+To work, the app stores the following only on your device, in storage that other apps cannot read:
+
+• Expenses you enter: amounts, dates, categories, items and notes.
+• Your categories and items, including any you create.
+• Bills you choose to attach: photos (from your camera or gallery) and PDF files. The app keeps its own copy of each bill.
+• Your profile, if you fill it in: name, date of birth and profile photo.
+• Items you delete, which stay in the in-app Recycle bin until you restore or permanently delete them.
+• Settings such as light or dark mode and the date of your last backup.
+
+None of this information is ever sent to us or to anyone else by the app.
+
+What we collect
+
+Nothing. We do not collect personal information, financial information, usage statistics, crash reports, location, contacts or device identifiers. The app contains no advertising and no analytics.
+
+Optional tips ("Buy me a coffee")
+
+You can choose to leave a tip on the About page. Tips are entirely optional; every feature works without one. Tips are processed by Google Play under Google's privacy policy. We never receive your card, UPI or bank details. Google Play gives us limited order information (such as an order number, the tip chosen, its price and the country of purchase) so we can see that a tip was made and handle refunds. To make tips work, the app includes Google Play's billing component, which uses an internet connection only to communicate with Google Play. Your expenses, bills and profile are never part of this.
+
+Permissions and system features
+
+• Screen lock check: before "Delete all my data", the app asks Android to confirm your screen lock (PIN, pattern, password or, on some phones, fingerprint). Android handles this check; the app never sees your PIN, password or fingerprint.
+• Camera: taking a bill photo opens your phone's own camera app. The app itself has no camera permission.
+• Photos and files: you pick photos, PDFs and backup files with Android's own pickers. The app only receives the specific files you choose.
+
+Backups and exports you control
+
+• Export backup / Export to Excel (CSV): these create files containing your data, saved only where you choose (for example your phone's storage or a cloud drive). Once exported, those files are handled by the place you saved them.
+• Android device backup: if you have turned on backup in your phone's settings, Android may include this app's data in your device backup, stored in your own Google account under Google's privacy policy. We cannot access it. You can turn this off in your phone's settings.
+
+Deleting your data
+
+• Delete single expenses, categories or items at any time; they go to the Recycle bin, where you can delete them permanently.
+• "Delete all my data" (Profile tab) permanently erases all expenses, bills, your profile and the Recycle bin from the app.
+• Uninstalling the app removes all of its data from your phone.
+
+Because we hold none of your data, there is nothing for us to delete on our side.
+
+Children
+
+The app is not directed at children under 13, and we do not knowingly collect information from anyone, including children.
+
+Changes to this policy
+
+If this policy changes, we will update this page and its effective date. If a future version of the app starts handling data differently (for example optional sign-in or sync), the policy will be updated before that version is released.
+
+Contact
+
+Questions about privacy? Email pratulkhandelwal16@gmail.com.

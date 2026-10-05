@@ -8,7 +8,7 @@ sign-in, sync, ads or analytics, these answers must change before that release.*
 Wording in Play Console changes from time to time; pick the option that means the same thing.
 
 ## Privacy policy
-Paste the public URL of `privacy-policy.html`.
+Paste: https://sites.google.com/view/expensesmanagerprivacypolicy
 
 ## Ads
 **No**, my app does not contain ads.

@@ -57,7 +57,7 @@ SAFE AND PRIVATE
 - **App category:** Finance
 - **Tags (pick up to 5 that Play offers):** Budget, Personal finance, Expense tracker, Money manager
 - **Contact email (shown publicly):** pratulkhandelwal16@gmail.com
-- **Privacy policy URL:** the public address where you host `privacy-policy.html` (see README)
+- **Privacy policy URL:** https://sites.google.com/view/expensesmanagerprivacypolicy
 
 ## Graphics (in this folder)
 | Asset | File | Play requirement |

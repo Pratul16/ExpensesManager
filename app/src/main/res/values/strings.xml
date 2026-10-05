@@ -9,5 +9,5 @@
     <string name="developer_email" translatable="false">pratulkhandelwal16@gmail.com</string>
     <string name="developer_tagline" translatable="false">Independent developer. Built Expenses Manager to make tracking money simple, private and a bit fun.</string>
     <!-- Public address of the privacy policy, e.g. https://sites.google.com/view/… -->
-    <string name="privacy_policy_url" translatable="false"></string>
+    <string name="privacy_policy_url" translatable="false">https://sites.google.com/view/expensesmanagerprivacypolicy</string>
 </resources>
