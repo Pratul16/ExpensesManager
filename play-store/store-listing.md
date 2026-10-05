@@ -1,0 +1,66 @@
+# Play Store listing – Expenses Manager 1.0.0
+
+Copy each block into Play Console → **Grow users → Store presence → Main store listing**.
+
+## App name (max 30 characters)
+```
+Expenses Manager
+```
+
+## Short description (max 80 characters)
+```
+Track spends by category and item, compare months, and see your money Wrapped.
+```
+(78 characters. Play's metadata rules discourage emoji here, so there are none.)
+
+## Full description (max 4,000 characters)
+```
+Where did your money go? Expenses Manager shows you, without sign-ups, ads or tracking.
+
+Log a spend in seconds, see where your money goes this month, and compare it with any other month or year. Everything stays on your phone.
+
+QUICK TO ADD
+• Add a spend with the + button: amount, category, item (like Milk or Daal), date and an optional note
+• Your most-used categories and items show up first
+• Swipe right on any expense, category or item to add another spend there instantly
+• Attach the bill if you like: snap a photo, pick one from your gallery, or add a PDF
+
+SEE WHERE IT WENT
+• This month at a glance, with a ring chart by category or by item
+• Tap any slice to see exactly how much it was and its share of the total
+• Spend finder: check any period (today, this week, last month, this year or any custom dates) for one category, one item or everything
+
+COMPARE
+• Any month against any other, like July 2025 vs July 2026
+• Year against year, by category or by item
+• Clear "more" and "less" with the exact difference and percentage
+
+YOUR MONTH, WRAPPED
+• Story-style cards: your top category, most-bought item, biggest splurge, busiest day, and how you did versus last month
+
+MAKE IT YOURS
+• Create, rename and delete categories and items, each with its own emoji
+• Light and dark mode
+• Profile with photo, name and birthday
+
+SAFE AND PRIVATE
+• No account needed, and the app has no internet access at all
+• No ads, no analytics, no data collection
+• Recycle bin: restore anything you deleted
+• Export a full backup (bills included) and import it on any phone
+• Export to Excel/CSV for spreadsheets
+• "Delete all my data" protected by your phone's screen lock
+```
+
+## Category and contact
+- **App category:** Finance
+- **Tags (pick up to 5 that Play offers):** Budget, Personal finance, Expense tracker, Money manager
+- **Contact email (shown publicly):** ppratulgupta@gmail.com
+- **Privacy policy URL:** the public address where you host `privacy-policy.html` (see README)
+
+## Graphics (in this folder)
+| Asset | File | Play requirement |
+|---|---|---|
+| App icon | `graphics/icon-512.png` | 512 × 512 PNG |
+| Feature graphic | `graphics/feature-graphic.png` | 1024 × 500 PNG/JPEG |
+| Phone screenshots | `graphics/screenshots/*.png` | 2–8, 1080 × 2160 (2:1) |
