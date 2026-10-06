@@ -1,5 +1,10 @@
 package com.pratul.expensesmanager.ui.components
 
+import androidx.compose.foundation.clickable
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -215,6 +220,78 @@ fun YearPickerButton(year: Int, years: List<Int>, onChange: (Int) -> Unit, modif
                     trailingIcon = if (y == year) ({ Text("✓") }) else null
                 )
             }
+        }
+    }
+}
+
+/**
+ * A compact field that opens a list when tapped: the selected [value] is shown in the box, the
+ * options (most-used first, as given) in the menu, with an optional "nothing" choice at the top and
+ * an "add new" action at the bottom.
+ */
+@Composable
+fun DropdownField(
+    label: String,
+    value: String,
+    options: List<String>,
+    display: @Composable (String) -> String,
+    onSelect: (String?) -> Unit,
+    addLabel: String,
+    onAddClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    noneLabel: String? = null,
+    selected: String? = null
+) {
+    var open by remember { mutableStateOf(false) }
+    var fieldWidth by remember { mutableStateOf(0) }
+    val density = androidx.compose.ui.platform.LocalDensity.current
+
+    Box(modifier.fillMaxWidth()) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(label) },
+            trailingIcon = { Text(if (open) "▲" else "▼", style = MaterialTheme.typography.labelMedium) },
+            singleLine = true,
+            modifier = Modifier
+                .fillMaxWidth()
+                .onSizeChanged { fieldWidth = it.width }
+        )
+        // Covers the field so a tap anywhere opens the list (a read-only text field would otherwise eat it)
+        Box(
+            Modifier
+                .matchParentSize()
+                .padding(top = 8.dp)
+                .clickable { open = true }
+        )
+        DropdownMenu(
+            expanded = open,
+            onDismissRequest = { open = false },
+            modifier = Modifier
+                .width(with(density) { fieldWidth.toDp() })
+                .heightIn(max = 380.dp)
+        ) {
+            if (noneLabel != null) {
+                DropdownMenuItem(
+                    text = { Text(noneLabel) },
+                    onClick = { onSelect(null); open = false },
+                    trailingIcon = if (selected == null) ({ Text("✓") }) else null
+                )
+                HorizontalDivider()
+            }
+            for (option in options) {
+                DropdownMenuItem(
+                    text = { Text(display(option)) },
+                    onClick = { onSelect(option); open = false },
+                    trailingIcon = if (option == selected) ({ Text("✓", color = MaterialTheme.colorScheme.primary) }) else null
+                )
+            }
+            HorizontalDivider()
+            DropdownMenuItem(
+                text = { Text("+ $addLabel", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold) },
+                onClick = { open = false; onAddClick() }
+            )
         }
     }
 }

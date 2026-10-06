@@ -71,6 +71,8 @@ fun AddExpenseDialog(
     var dateMillis by remember { mutableLongStateOf(System.currentTimeMillis()) }
     var showError by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
+    var addingCategory by remember { mutableStateOf(false) }
+    var addingItem by remember { mutableStateOf(false) }
     var bill by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
 
@@ -108,9 +110,12 @@ fun AddExpenseDialog(
                     )
                 }
                 Spacer(Modifier.height(12.dp))
-                ChipPicker(
-                    title = "Category",
+                // Category and item as compact dropdowns (most-used first), each with "add new" at the bottom
+                DropdownField(
+                    label = "Category",
+                    value = "${categoryEmoji(category)}  $category",
                     options = categoryNames,
+                    display = { "${categoryEmoji(it)}  $it" },
                     selected = category,
                     onSelect = { picked ->
                         if (picked != null && picked != category) {
@@ -118,34 +123,19 @@ fun AddExpenseDialog(
                             item = null
                         }
                     },
-                    addTitle = "Add new category",
-                    onAdd = {}, // handled by the emoji dialog below
-                    display = { "${categoryEmoji(it)} $it" },
-                    addDialog = { dismiss, added ->
-                        CategoryDialog(
-                            title = "Add new category",
-                            confirmLabel = "Add",
-                            existing = categoryNames,
-                            onDismiss = dismiss,
-                            onConfirm = { name, emoji ->
-                                addedHere = addedHere + name
-                                onAddCategory(name, emoji)
-                                added(name)
-                            }
-                        )
-                    }
+                    addLabel = "Add new category",
+                    onAddClick = { addingCategory = true }
                 )
-                Spacer(Modifier.height(12.dp))
-                ChipPicker(
-                    title = "Item",
+                Spacer(Modifier.height(10.dp))
+                DropdownField(
+                    label = "Item (optional)",
+                    value = item ?: "None",
                     options = items,
+                    display = { it },
                     selected = item,
                     onSelect = { item = it },
-                    addTitle = "Add new item to $category",
-                    onAdd = {
-                        addedHere = addedHere + "$category/$it"
-                        onAddItem(category, it)
-                    },
+                    addLabel = "Add new item to $category",
+                    onAddClick = { addingItem = true },
                     noneLabel = "None"
                 )
                 Spacer(Modifier.height(12.dp))
@@ -185,6 +175,36 @@ fun AddExpenseDialog(
             TextButton(onClick = ::cancel) { Text("Cancel") }
         }
     )
+
+    if (addingCategory) {
+        CategoryDialog(
+            title = "Add new category",
+            confirmLabel = "Add",
+            existing = categoryNames,
+            onDismiss = { addingCategory = false },
+            onConfirm = { name, emoji ->
+                addedHere = addedHere + name
+                onAddCategory(name, emoji)
+                category = name
+                item = null
+                addingCategory = false
+            }
+        )
+    }
+    if (addingItem) {
+        NameDialog(
+            title = "Add new item to $category",
+            confirmLabel = "Add",
+            existing = items,
+            onDismiss = { addingItem = false },
+            onConfirm = { name ->
+                addedHere = addedHere + "$category/$name"
+                onAddItem(category, name)
+                item = name
+                addingItem = false
+            }
+        )
+    }
 
     if (showDatePicker) {
         val todayPicker = localMillisToPickerDate(System.currentTimeMillis())

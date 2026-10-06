@@ -35,13 +35,18 @@ COMPARE
 • Year against year, by category or by item
 • Clear "more" and "less" with the exact difference and percentage
 
+BORROW & LEND
+• Keep track of money you lent or borrowed, person by person
+• See what you'll get back, what you owe, and your surplus or deficit
+• Share any record as a neat picture on WhatsApp or any app
+
 YOUR MONTH, WRAPPED
 • Story-style cards: your top category, most-bought item, biggest splurge, busiest day, and how you did versus last month
 
 MAKE IT YOURS
 • Create, rename and delete categories and items, each with its own emoji
-• Light and dark mode
-• Profile with photo, name and birthday
+• 5 themes: Vibrant, Simple, Glass, Ocean and Sunset, each in light and dark mode
+• Profile with photo (crop it to a circle), name and birthday
 
 SAFE AND PRIVATE
 • No account needed: your expenses, bills and profile never leave your phone
@@ -49,7 +54,8 @@ SAFE AND PRIVATE
 • Every feature is free. An optional "Buy me a coffee" tip is there if you'd like to support the app
 • Recycle bin: restore anything you deleted
 • Export a full backup (bills included) and import it on any phone
-• Export to Excel/CSV for spreadsheets
+• App lock with fingerprint, face or an app PIN
+• Export to Excel (CSV) or a printable PDF report, for any period
 • "Delete all my data" protected by your phone's screen lock
 ```
 

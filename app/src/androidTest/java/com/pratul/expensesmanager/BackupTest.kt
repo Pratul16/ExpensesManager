@@ -10,6 +10,8 @@ import com.pratul.expensesmanager.data.BinEntry
 import com.pratul.expensesmanager.data.BinKind
 import com.pratul.expensesmanager.data.Category
 import com.pratul.expensesmanager.data.Expense
+import com.pratul.expensesmanager.data.Loan
+import com.pratul.expensesmanager.data.LoanType
 import com.pratul.expensesmanager.data.Profile
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertArrayEquals
@@ -32,7 +34,11 @@ class BackupTest {
         catalog = listOf(Category("Food", listOf("Lunch"), "🍔"), Category("Pets", emptyList(), "🐶")),
         bin = listOf(BinEntry(9, 5, BinKind.Item, "Food", "Snacks", emptyList(), listOf(expenses[0]), "🍔")),
         profile = Profile("Pratul", 800_000_000_000, 0),
-        photo = byteArrayOf(1, 2, 3, 127, -1)
+        photo = byteArrayOf(1, 2, 3, 127, -1),
+        loans = listOf(
+            Loan(7, LoanType.Lent, "Rahul", 2000.0, 1_759_600_000_000, "Movie tickets", dueMillis = 1_760_000_000_000),
+            Loan(8, LoanType.Borrowed, "Asha", 450.5, 1_759_500_000_000, settled = true, settledAt = 1_759_550_000_000)
+        )
     )
 
     @Test
@@ -45,6 +51,7 @@ class BackupTest {
         assertEquals("Pratul", back.profile?.name)
         assertEquals(800_000_000_000, back.profile?.dobUtcMillis)
         assertArrayEquals(data.photo, back.photo)
+        assertEquals(data.loans, back.loans)
     }
 
     @Test

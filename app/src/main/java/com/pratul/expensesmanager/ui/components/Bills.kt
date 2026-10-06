@@ -59,6 +59,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.pratul.expensesmanager.data.BillStore
 import com.pratul.expensesmanager.data.Expense
+import com.pratul.expensesmanager.expectExternalReturn
 import com.pratul.expensesmanager.util.formatDate
 import com.pratul.expensesmanager.util.formatMoney
 import kotlinx.coroutines.launch
@@ -124,6 +125,7 @@ fun BillPicker(bill: String?, onChange: (String?) -> Unit, confirmRemove: Boolea
                         val uri = BillStore.cameraTargetUri(context)
                         cameraUri = uri.toString()
                         try {
+                            context.expectExternalReturn()
                             takePhoto.launch(uri)
                         } catch (e: Exception) {
                             Toast.makeText(context, "No camera app found", Toast.LENGTH_SHORT).show()
@@ -132,10 +134,16 @@ fun BillPicker(bill: String?, onChange: (String?) -> Unit, confirmRemove: Boolea
                     label = { Text("📷 Camera") }
                 )
                 AssistChip(
-                    onClick = { pickPhoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+                    onClick = {
+                        context.expectExternalReturn()
+                        pickPhoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                    },
                     label = { Text("🖼️ Photo") }
                 )
-                AssistChip(onClick = { pickPdf.launch(arrayOf("application/pdf")) }, label = { Text("📄 PDF") })
+                AssistChip(onClick = {
+                    context.expectExternalReturn()
+                    pickPdf.launch(arrayOf("application/pdf"))
+                }, label = { Text("📄 PDF") })
             }
             else -> Row(verticalAlignment = Alignment.CenterVertically) {
                 BillThumbnail(bill, Modifier.size(56.dp).clickable { viewing = true })

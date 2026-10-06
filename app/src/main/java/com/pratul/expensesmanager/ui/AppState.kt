@@ -12,6 +12,7 @@ import com.pratul.expensesmanager.data.Category
 import com.pratul.expensesmanager.data.DEFAULT_EMOJI
 import com.pratul.expensesmanager.data.Expense
 import com.pratul.expensesmanager.data.ExpenseStore
+import com.pratul.expensesmanager.data.Loan
 import com.pratul.expensesmanager.data.defaultCatalog
 import com.pratul.expensesmanager.data.defaultEmojiFor
 import java.io.File
@@ -27,6 +28,8 @@ class AppState(private val context: Context) {
         private set
     var bin by mutableStateOf(ExpenseStore.loadBin(context))
         private set
+    var loans by mutableStateOf(ExpenseStore.loadLoans(context))
+        private set
 
     private fun updateExpenses(list: List<Expense>) {
         expenses = list
@@ -36,6 +39,11 @@ class AppState(private val context: Context) {
     private fun updateCatalog(list: List<Category>) {
         catalog = list
         ExpenseStore.saveCatalog(context, list)
+    }
+
+    private fun updateLoans(list: List<Loan>) {
+        loans = list
+        ExpenseStore.saveLoans(context, list)
     }
 
     private fun updateBin(list: List<BinEntry>) {
@@ -111,6 +119,25 @@ class AppState(private val context: Context) {
         moveToBin(BinKind.Item, category, item, emptyList(), removed)
     }
 
+    // ---------- Borrow & lend ----------
+
+    /** Adds a new record, or replaces the one with the same id (editing). */
+    fun saveLoan(loan: Loan) {
+        val id = if (loan.id != 0L) loan.id else maxOf(System.currentTimeMillis(), (loans.maxOfOrNull { it.id } ?: 0) + 1)
+        val saved = loan.copy(id = id)
+        updateLoans(if (loans.any { it.id == id }) loans.map { if (it.id == id) saved else it } else loans + saved)
+    }
+
+    fun setLoanSettled(id: Long, settled: Boolean) {
+        updateLoans(loans.map {
+            if (it.id == id) it.copy(settled = settled, settledAt = if (settled) System.currentTimeMillis() else null) else it
+        })
+    }
+
+    fun deleteLoan(id: Long) {
+        updateLoans(loans.filter { it.id != id })
+    }
+
     // ---------- Recycle bin ----------
 
     private fun moveToBin(
@@ -174,6 +201,7 @@ class AppState(private val context: Context) {
         updateExpenses(emptyList())
         updateCatalog(defaultCatalog)
         updateBin(emptyList())
+        updateLoans(emptyList())
         BillStore.deleteAll(context)
     }
 
@@ -201,6 +229,7 @@ class AppState(private val context: Context) {
         updateCatalog(backup.catalog.ifEmpty { defaultCatalog })
         updateExpenses(backup.expenses)
         updateBin(backup.bin)
+        updateLoans(backup.loans)
     }
 
     /**
@@ -243,6 +272,8 @@ class AppState(private val context: Context) {
 
         updateExpenses(expenses + added)
         updateBin(bin + addedBin)
+        val loanIds = loans.map { it.id }.toHashSet()
+        updateLoans(loans + backup.loans.filter { it.id !in loanIds })
         return added.size
     }
 

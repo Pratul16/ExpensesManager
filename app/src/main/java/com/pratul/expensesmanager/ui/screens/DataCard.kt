@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -27,6 +28,10 @@ import androidx.compose.ui.unit.dp
 import com.pratul.expensesmanager.R
 import com.pratul.expensesmanager.data.Backup
 import com.pratul.expensesmanager.data.BackupData
+import com.pratul.expensesmanager.data.PdfReport
+import com.pratul.expensesmanager.expectExternalReturn
+import com.pratul.expensesmanager.util.PeriodPreset
+import com.pratul.expensesmanager.util.rangeFor
 import com.pratul.expensesmanager.data.Profile
 import com.pratul.expensesmanager.data.ProfileStore
 import com.pratul.expensesmanager.ui.AppState
@@ -61,7 +66,8 @@ fun DataCard(state: AppState, onProfileReplaced: () -> Unit) {
                     catalog = state.catalog,
                     bin = state.bin,
                     profile = ProfileStore.load(context),
-                    photo = ProfileStore.photoBytes(context)
+                    photo = ProfileStore.photoBytes(context),
+                    loans = state.loans
                 )
                 Backup.writeZip(context, uri, data)
                 Backup.markBackedUp(context)
@@ -73,14 +79,39 @@ fun DataCard(state: AppState, onProfileReplaced: () -> Unit) {
         }
     }
 
+    // "Export": pick a period, then CSV (spreadsheets) or PDF (a printable report)
+    var exportOpen by remember { mutableStateOf(false) }
+    var exportPeriod by remember { mutableStateOf(PeriodPreset.AllTime) }
+    fun periodExpenses(): List<com.pratul.expensesmanager.data.Expense> {
+        val range = rangeFor(exportPeriod, state.expenses.minOfOrNull { it.dateMillis })
+        return state.expenses.filter { it.dateMillis in range }
+    }
+    fun periodLabel(): String =
+        if (exportPeriod == PeriodPreset.AllTime) "All time"
+        else "${exportPeriod.label} (${rangeFor(exportPeriod, null).label()})"
+
     val exportCsv = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
         scope.launch {
             try {
-                Backup.writeText(context, uri, Backup.toCsv(state.expenses))
-                toast("Spreadsheet saved ✅ ${state.expenses.size} expenses")
+                val list = periodExpenses()
+                Backup.writeText(context, uri, Backup.toCsv(list))
+                toast("Spreadsheet saved ✅ ${list.size} expenses")
             } catch (e: Exception) {
                 error = "Couldn't save the spreadsheet: ${e.message}"
+            }
+        }
+    }
+
+    val exportPdf = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/pdf")) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            try {
+                val list = periodExpenses()
+                PdfReport.write(context, uri, list, periodLabel(), ProfileStore.load(context).name)
+                toast("PDF report saved ✅ ${list.size} expenses")
+            } catch (e: Exception) {
+                error = "Couldn't save the PDF: ${e.message}"
             }
         }
     }
@@ -119,21 +150,45 @@ fun DataCard(state: AppState, onProfileReplaced: () -> Unit) {
             icon = R.drawable.ic_upload,
             title = "Export backup",
             subtitle = "Save everything, bills included, to a file you can import later",
-            onClick = { exportBackup.launch(Backup.suggestedFileName()) }
+            onClick = {
+                context.expectExternalReturn()
+                exportBackup.launch(Backup.suggestedFileName())
+            }
         )
         HorizontalDivider(Modifier.padding(start = 56.dp))
         MenuRow(
             icon = R.drawable.ic_download,
             title = "Import backup",
             subtitle = "Bring back data from a backup file",
-            onClick = { importBackup.launch(arrayOf("application/zip", "application/json", "application/octet-stream", "*/*")) }
+            onClick = {
+                context.expectExternalReturn()
+                importBackup.launch(arrayOf("application/zip", "application/json", "application/octet-stream", "*/*"))
+            }
         )
         HorizontalDivider(Modifier.padding(start = 56.dp))
         MenuRow(
             icon = R.drawable.ic_table,
-            title = "Export to Excel (CSV)",
-            subtitle = "For spreadsheets. Can't be imported back",
-            onClick = { exportCsv.launch(Backup.suggestedCsvName()) }
+            title = "Export",
+            subtitle = "Excel (CSV) or PDF report, for any period",
+            onClick = { exportOpen = true }
+        )
+    }
+
+    if (exportOpen) {
+        ExportDialog(
+            period = exportPeriod,
+            onPeriodChange = { exportPeriod = it },
+            onDismiss = { exportOpen = false },
+            onCsv = {
+                exportOpen = false
+                context.expectExternalReturn()
+                exportCsv.launch(Backup.suggestedCsvName())
+            },
+            onPdf = {
+                exportOpen = false
+                context.expectExternalReturn()
+                exportPdf.launch(Backup.suggestedCsvName().removeSuffix(".csv") + ".pdf")
+            }
         )
     }
 
@@ -218,4 +273,54 @@ private fun restoreProfile(context: Context, backup: BackupData) {
     val p = backup.profile ?: return
     backup.photo?.let { ProfileStore.restorePhotoBytes(context, it) }
     ProfileStore.save(context, Profile(p.name, p.dobUtcMillis, System.currentTimeMillis()))
+}
+
+/** Choose a period, then export it as a spreadsheet (CSV) or a printable PDF report. */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+private fun ExportDialog(
+    period: PeriodPreset,
+    onPeriodChange: (PeriodPreset) -> Unit,
+    onDismiss: () -> Unit,
+    onCsv: () -> Unit,
+    onPdf: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Export 📤") },
+        text = {
+            Column {
+                Text("Period", style = MaterialTheme.typography.labelLarge)
+                androidx.compose.foundation.layout.FlowRow(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
+                    for (p in listOf(PeriodPreset.AllTime, PeriodPreset.ThisYear, PeriodPreset.ThisMonth, PeriodPreset.LastMonth)) {
+                        FilterChip(selected = period == p, onClick = { onPeriodChange(p) }, label = { Text(p.label) })
+                    }
+                }
+                Text("Format", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 12.dp, bottom = 6.dp))
+                Card(Modifier.fillMaxWidth()) {
+                    MenuRow(
+                        icon = R.drawable.ic_table,
+                        title = "Excel (CSV)",
+                        subtitle = "Open in Excel or Google Sheets",
+                        onClick = onCsv
+                    )
+                    HorizontalDivider(Modifier.padding(start = 56.dp))
+                    MenuRow(
+                        icon = R.drawable.ic_upload,
+                        title = "PDF report",
+                        subtitle = "Summary, categories and every expense; ready to print or share",
+                        onClick = onPdf
+                    )
+                }
+                Text(
+                    "Exports can't be imported back. Use Export backup for that.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 10.dp)
+                )
+            }
+        },
+        confirmButton = {},
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+    )
 }

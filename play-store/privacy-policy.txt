@@ -1,6 +1,6 @@
 Privacy Policy
 
-Expenses Manager (Android app) · Effective 5 October 2026
+Expenses Manager (Android app) · Effective 6 October 2026
 
 In short: Expenses Manager keeps everything on your phone. Your expenses, bills and profile are never sent anywhere. There is no account to sign up for, no ads and no analytics, and we do not collect, sell or share your data. The only time the app goes online is if you choose to leave an optional tip, which Google Play handles.
 
@@ -16,6 +16,8 @@ To work, the app stores the following only on your device, in storage that other
 • Your categories and items, including any you create.
 • Bills you choose to attach: photos (from your camera or gallery) and PDF files. The app keeps its own copy of each bill.
 • Your profile, if you fill it in: name, date of birth and profile photo.
+• Borrow & lend records you add: the names you type for the people involved, amounts, dates and notes. These are your own notes; the app does not contact those people or read your contacts.
+• If you turn on the app lock with an app PIN: only a scrambled (salted and hashed) form of the PIN, never the PIN itself.
 • Items you delete, which stay in the in-app Recycle bin until you restore or permanently delete them.
 • Settings such as light or dark mode and the date of your last backup.
 
@@ -31,13 +33,14 @@ You can choose to leave a tip on the About page. Tips are entirely optional; eve
 
 Permissions and system features
 
-• Screen lock check: before "Delete all my data", the app asks Android to confirm your screen lock (PIN, pattern, password or, on some phones, fingerprint). Android handles this check; the app never sees your PIN, password or fingerprint.
+• Screen lock and fingerprint: the optional app lock, and "Delete all my data", ask Android to confirm it's you (fingerprint, face, or your phone's PIN, pattern or password). Android handles this check; the app never sees your fingerprint, face or phone PIN.
 • Camera: taking a bill photo opens your phone's own camera app. The app itself has no camera permission.
 • Photos and files: you pick photos, PDFs and backup files with Android's own pickers. The app only receives the specific files you choose.
 
 Backups and exports you control
 
-• Export backup / Export to Excel (CSV): these create files containing your data, saved only where you choose (for example your phone's storage or a cloud drive). Once exported, those files are handled by the place you saved them.
+• Export backup / Export (Excel CSV or PDF report): these create files containing your data, saved only where you choose (for example your phone's storage or a cloud drive). Once exported, those files are handled by the place you saved them.
+• Sharing a borrow/lend record: when you tap "Share as image", the app creates a picture of that one record (name, amount, dates, note) and opens Android's share menu. It goes only to the app and person you pick.
 • Android device backup: if you have turned on backup in your phone's settings, Android may include this app's data in your device backup, stored in your own Google account under Google's privacy policy. We cannot access it. You can turn this off in your phone's settings.
 
 Deleting your data

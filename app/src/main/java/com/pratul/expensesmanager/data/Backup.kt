@@ -23,7 +23,9 @@ data class BackupData(
     val profile: Profile?,
     val photo: ByteArray?,
     /** Where an imported .zip's bill files were unpacked (null for exports and old .json backups). */
-    val billsDir: File? = null
+    val billsDir: File? = null,
+    /** Borrow & lend records (older backups have none). */
+    val loans: List<Loan> = emptyList()
 )
 
 /**
@@ -53,6 +55,7 @@ object Backup {
             .put("expenses", ExpenseStore.expensesToJson(data.expenses))
             .put("catalog", ExpenseStore.catalogToJson(data.catalog))
             .put("bin", ExpenseStore.binToJson(data.bin))
+            .put("loans", LoanJson.toJson(data.loans))
         data.profile?.let {
             root.put(
                 "profile",
@@ -113,6 +116,7 @@ object Backup {
                 expenses = ExpenseStore.expensesFromJson(root.getJSONArray("expenses")),
                 catalog = ExpenseStore.catalogFromJson(root.getJSONArray("catalog")),
                 bin = root.optJSONArray("bin")?.let { ExpenseStore.binFromJson(it) } ?: emptyList(),
+                loans = root.optJSONArray("loans")?.let { LoanJson.fromJson(it) } ?: emptyList(),
                 profile = profile,
                 photo = root.optString("photo", "").takeIf { it.isNotEmpty() }?.let { Base64.decode(it, Base64.DEFAULT) }
             )

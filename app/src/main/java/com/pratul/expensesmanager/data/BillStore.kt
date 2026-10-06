@@ -8,6 +8,7 @@ import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
 import android.net.Uri
 import androidx.core.content.FileProvider
+import com.pratul.expensesmanager.expectExternalReturn
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -118,6 +119,7 @@ object BillStore {
             .setDataAndType(uri, if (isPdf(name)) "application/pdf" else "image/jpeg")
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
         return try {
+            context.expectExternalReturn()
             context.startActivity(intent)
             true
         } catch (e: ActivityNotFoundException) {

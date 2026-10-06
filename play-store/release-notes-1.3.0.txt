@@ -1,0 +1,10 @@
+<en-IN>
+New in 1.3.0, shaped by our testers' feedback:
+• Borrow & Lend: track money you lent or borrowed, see your surplus or deficit, and share any record as a picture
+• App lock with fingerprint or app PIN
+• 5 themes, including Simple and Glass
+• Export as Excel (CSV) or a PDF report
+• Simpler New spend screen with dropdowns
+• Circle-crop your profile photo
+• New welcome animation and quick profile setup
+</en-IN>

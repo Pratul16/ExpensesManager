@@ -26,7 +26,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SelectableDates
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDateRangePickerState
@@ -48,6 +47,7 @@ import androidx.core.view.WindowCompat
 import com.pratul.expensesmanager.data.Category
 import com.pratul.expensesmanager.data.Expense
 import com.pratul.expensesmanager.data.GroupBy
+import com.pratul.expensesmanager.ui.components.AppBackground
 import com.pratul.expensesmanager.ui.components.CountUpText
 import com.pratul.expensesmanager.ui.components.DonutWithLegend
 import com.pratul.expensesmanager.ui.components.ExpenseRow
@@ -117,7 +117,7 @@ fun SpendFinderDialog(
                 }
             }
         }
-        Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        AppBackground(Modifier.fillMaxSize()) {
             Column(Modifier.systemBarsPadding()) {
                 SubScreenHeader("Spend finder 🔎", onClose)
                 LazyColumn(

@@ -38,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -50,8 +51,15 @@ import androidx.compose.ui.unit.sp
 import com.pratul.expensesmanager.data.Category
 import com.pratul.expensesmanager.data.categoryEmojiChoices
 import com.pratul.expensesmanager.data.defaultEmojiFor
+import com.pratul.expensesmanager.data.AppStyle
+import com.pratul.expensesmanager.ui.theme.GlassGradient
 import com.pratul.expensesmanager.ui.theme.HeroGradientDark
 import com.pratul.expensesmanager.ui.theme.HeroGradientLight
+import com.pratul.expensesmanager.ui.theme.LocalAppStyle
+import com.pratul.expensesmanager.ui.theme.OceanGradientDark
+import com.pratul.expensesmanager.ui.theme.OceanGradientLight
+import com.pratul.expensesmanager.ui.theme.SunsetGradientDark
+import com.pratul.expensesmanager.ui.theme.SunsetGradientLight
 import com.pratul.expensesmanager.ui.theme.categoryColor
 import com.pratul.expensesmanager.ui.theme.isAppDark
 import kotlin.math.cos
@@ -86,7 +94,49 @@ fun CategoryBadge(category: String, size: Dp = 40.dp) {
 
 @Composable
 @ReadOnlyComposable
-fun heroBrush(): Brush = Brush.linearGradient(if (isAppDark()) HeroGradientDark else HeroGradientLight)
+fun heroBrush(): Brush {
+    val dark = isAppDark()
+    return when (LocalAppStyle.current) {
+        AppStyle.Vibrant -> Brush.linearGradient(if (dark) HeroGradientDark else HeroGradientLight)
+        // Simple: one calm blue, gently shaded
+        AppStyle.Simple -> Brush.linearGradient(if (dark) listOf(Color(0xFF1E3A8A), Color(0xFF1D4ED8)) else listOf(Color(0xFF1D4ED8), Color(0xFF3B82F6)))
+        AppStyle.Glass -> Brush.linearGradient(GlassGradient)
+        AppStyle.Ocean -> Brush.linearGradient(if (dark) OceanGradientDark else OceanGradientLight)
+        AppStyle.Sunset -> Brush.linearGradient(if (dark) SunsetGradientDark else SunsetGradientLight)
+    }
+}
+
+/**
+ * The screen background for the chosen style. Plain colour for most; for Glass, a soft wash of
+ * colour blobs that shows through the see-through cards and bars.
+ */
+@Composable
+fun AppBackground(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    val style = LocalAppStyle.current
+    val dark = isAppDark()
+    val base = if (style == AppStyle.Glass) (if (dark) Color(0xFF120C24) else Color(0xFFF3EEFF)) else MaterialTheme.colorScheme.background
+    Box(
+        modifier
+            .background(base)
+            .then(
+                if (style != AppStyle.Glass) Modifier else Modifier.drawBehind {
+                    fun blob(color: Color, cx: Float, cy: Float, r: Float) = drawCircle(
+                        Brush.radialGradient(listOf(color, Color.Transparent), center = Offset(size.width * cx, size.height * cy), radius = size.minDimension * r),
+                        radius = size.minDimension * r,
+                        center = Offset(size.width * cx, size.height * cy)
+                    )
+                    val a = if (dark) 0.55f else 0.45f
+                    blob(Color(0xFF8B5CF6).copy(alpha = a), 0.1f, 0.08f, 0.9f)
+                    blob(Color(0xFFEC4899).copy(alpha = a), 0.95f, 0.3f, 0.8f)
+                    blob(Color(0xFF38BDF8).copy(alpha = a * 0.8f), 0.15f, 0.65f, 0.85f)
+                    blob(Color(0xFFF59E0B).copy(alpha = a * 0.5f), 0.85f, 0.95f, 0.7f)
+                }
+            )
+    ) {
+        // Text drawn straight on the background uses the theme's text colour (not the default black)
+        CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) { content() }
+    }
+}
 
 /** A big rounded card on the brand gradient. Everything inside is drawn in white. */
 @Composable

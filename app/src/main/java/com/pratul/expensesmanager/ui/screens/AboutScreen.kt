@@ -40,6 +40,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.pratul.expensesmanager.R
 import com.pratul.expensesmanager.billing.TipJar
+import com.pratul.expensesmanager.expectExternalReturn
 import com.pratul.expensesmanager.billing.TipJarState
 import com.pratul.expensesmanager.ui.components.GradientCard
 import com.pratul.expensesmanager.util.findActivity
@@ -215,6 +216,7 @@ private fun sendEmail(context: Context, to: String, subject: String, body: Strin
         .putExtra(Intent.EXTRA_SUBJECT, subject)
         .putExtra(Intent.EXTRA_TEXT, body)
     try {
+        context.expectExternalReturn()
         context.startActivity(intent)
     } catch (e: ActivityNotFoundException) {
         Toast.makeText(context, "No email app found. Write to $to", Toast.LENGTH_LONG).show()
@@ -223,6 +225,7 @@ private fun sendEmail(context: Context, to: String, subject: String, body: Strin
 
 private fun openLink(context: Context, url: String) {
     try {
+        context.expectExternalReturn()
         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
     } catch (e: ActivityNotFoundException) {
         Toast.makeText(context, "No browser found", Toast.LENGTH_SHORT).show()

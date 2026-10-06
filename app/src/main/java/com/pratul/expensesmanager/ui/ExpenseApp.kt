@@ -46,6 +46,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.pratul.expensesmanager.R
 import com.pratul.expensesmanager.billing.TipJar
+import com.pratul.expensesmanager.data.AppStyle
 import com.pratul.expensesmanager.data.ThemeMode
 import com.pratul.expensesmanager.data.defaultEmojiFor
 import com.pratul.expensesmanager.ui.components.AddExpenseDialog
@@ -56,6 +57,8 @@ import com.pratul.expensesmanager.ui.components.LocalSetBill
 import com.pratul.expensesmanager.ui.screens.LocalTipJar
 import com.pratul.expensesmanager.ui.screens.AccountScreen
 import com.pratul.expensesmanager.ui.screens.CompareScreen
+import com.pratul.expensesmanager.ui.screens.LendScreen
+import com.pratul.expensesmanager.ui.screens.LoanDialog
 import com.pratul.expensesmanager.ui.screens.MonthScreen
 import com.pratul.expensesmanager.ui.screens.SpendFinderDialog
 import com.pratul.expensesmanager.ui.screens.YearlyScreen
@@ -66,20 +69,27 @@ import kotlinx.coroutines.launch
 data class AddRequest(val category: String?, val item: String?)
 
 enum class Tab(val label: String, @param:DrawableRes val icon: Int) {
-    Month("This month", R.drawable.ic_pie_chart),
+    Month("Month", R.drawable.ic_pie_chart),
     Compare("Compare", R.drawable.ic_compare),
     Yearly("Yearly", R.drawable.ic_bar_chart),
+    Lend("Lend", R.drawable.ic_swap),
     Account("Profile", R.drawable.ic_person)
 }
 
 @Composable
-fun ExpenseApp(themeMode: ThemeMode, onThemeModeChange: (ThemeMode) -> Unit) {
+fun ExpenseApp(
+    themeMode: ThemeMode,
+    onThemeModeChange: (ThemeMode) -> Unit,
+    appStyle: AppStyle,
+    onAppStyleChange: (AppStyle) -> Unit
+) {
     val context = LocalContext.current
     val state = remember { AppState(context) }
     var tab by rememberSaveable { mutableStateOf(Tab.Month) }
     // Non-null while "New spend" is open; may carry a category/item chosen by a swipe
     var addRequest by remember { mutableStateOf<AddRequest?>(null) }
     var showSpendFinder by remember { mutableStateOf(false) }
+    var addingLoan by remember { mutableStateOf(false) }
     var confetti by remember { mutableIntStateOf(0) }
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -118,13 +128,13 @@ fun ExpenseApp(themeMode: ThemeMode, onThemeModeChange: (ThemeMode) -> Unit) {
                 modifier = Modifier.fillMaxSize(),
                 snackbarHost = { SnackbarHost(snackbar) },
                 bottomBar = {
-                    NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
+                    NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainerLow) {
                         for (t in Tab.entries) {
                             NavigationBarItem(
                                 selected = tab == t,
                                 onClick = { tab = t },
                                 icon = { Icon(painterResource(t.icon), contentDescription = null) },
-                                label = { Text(t.label) },
+                                label = { Text(t.label, maxLines = 1, softWrap = false) },
                                 colors = NavigationBarItemDefaults.colors(
                                     selectedIconColor = MaterialTheme.colorScheme.onPrimary,
                                     indicatorColor = MaterialTheme.colorScheme.primary,
@@ -159,6 +169,17 @@ fun ExpenseApp(themeMode: ThemeMode, onThemeModeChange: (ThemeMode) -> Unit) {
                             }
                         }
                     }
+                    // On Borrow & Lend, "+" adds a record
+                    if (tab == Tab.Lend) {
+                        FloatingActionButton(
+                            onClick = { addingLoan = true },
+                            shape = CircleShape,
+                            containerColor = MaterialTheme.colorScheme.secondary,
+                            contentColor = MaterialTheme.colorScheme.onSecondary
+                        ) {
+                            Icon(painterResource(R.drawable.ic_add), contentDescription = "Add borrow or lend")
+                        }
+                    }
                 },
                 floatingActionButtonPosition = FabPosition.End
             ) { innerPadding ->
@@ -174,13 +195,28 @@ fun ExpenseApp(themeMode: ThemeMode, onThemeModeChange: (ThemeMode) -> Unit) {
                         Tab.Month -> MonthScreen(state.expenses, onDelete = state::deleteExpense)
                         Tab.Compare -> CompareScreen(state.expenses)
                         Tab.Yearly -> YearlyScreen(state.expenses)
-                        Tab.Account -> AccountScreen(state, themeMode, onThemeModeChange)
+                        Tab.Lend -> LendScreen(state, onAdd = { addingLoan = true })
+                        Tab.Account -> AccountScreen(state, themeMode, onThemeModeChange, appStyle, onAppStyleChange)
                     }
                 }
             }
 
             // Drawn over everything but doesn't block touches
             ConfettiBurst(confetti)
+        }
+
+        if (addingLoan) {
+            LoanDialog(
+                initial = null,
+                people = state.loans.map { it.person.trim() }.distinct(),
+                onDismiss = { addingLoan = false },
+                onSave = {
+                    state.saveLoan(it)
+                    addingLoan = false
+                    confetti++
+                    haptics.performHapticFeedback(HapticFeedbackType.Confirm)
+                }
+            )
         }
 
         if (showSpendFinder) {

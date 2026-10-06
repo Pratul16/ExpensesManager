@@ -20,6 +20,7 @@ import com.android.billingclient.api.QueryPurchasesParams
 import com.android.billingclient.api.consumePurchase
 import com.android.billingclient.api.queryProductDetails
 import com.android.billingclient.api.queryPurchasesAsync
+import com.pratul.expensesmanager.expectExternalReturn
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -134,6 +135,7 @@ class TipJar(context: Context) : PurchasesUpdatedListener {
                 listOf(BillingFlowParams.ProductDetailsParams.newBuilder().setProductDetails(option.details).build())
             )
             .build()
+        activity.expectExternalReturn()
         val result = client.launchBillingFlow(activity, flow)
         if (result.responseCode != BillingClient.BillingResponseCode.OK) {
             problem = "Couldn't open Google Play payment (${result.debugMessage.ifBlank { "code ${result.responseCode}" }})"

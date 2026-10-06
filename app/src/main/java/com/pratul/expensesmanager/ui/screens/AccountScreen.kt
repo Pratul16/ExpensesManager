@@ -3,9 +3,6 @@ package com.pratul.expensesmanager.ui.screens
 import android.graphics.Bitmap
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -25,6 +22,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -73,9 +71,12 @@ import com.pratul.expensesmanager.auth.GoogleAuth
 import com.pratul.expensesmanager.auth.SignInResult
 import com.pratul.expensesmanager.data.Profile
 import com.pratul.expensesmanager.data.ProfileStore
+import com.pratul.expensesmanager.data.AppStyle
 import com.pratul.expensesmanager.data.ThemeMode
 import com.pratul.expensesmanager.ui.AppState
 import com.pratul.expensesmanager.ui.components.GradientCard
+import com.pratul.expensesmanager.ui.components.rememberCircleCropPicker
+import com.pratul.expensesmanager.ui.theme.colorSchemeFor
 import com.pratul.expensesmanager.ui.theme.isAppDark
 import com.pratul.expensesmanager.util.ageFrom
 import com.pratul.expensesmanager.util.formatPickerDate
@@ -88,12 +89,18 @@ private enum class AccountPage { Home, Categories, Bin, About }
 private const val SHOW_GOOGLE_SIGN_IN = false
 
 @Composable
-fun AccountScreen(state: AppState, themeMode: ThemeMode, onThemeModeChange: (ThemeMode) -> Unit) {
+fun AccountScreen(
+    state: AppState,
+    themeMode: ThemeMode,
+    onThemeModeChange: (ThemeMode) -> Unit,
+    appStyle: AppStyle,
+    onAppStyleChange: (AppStyle) -> Unit
+) {
     var page by rememberSaveable { mutableStateOf(AccountPage.Home) }
     BackHandler(enabled = page != AccountPage.Home) { page = AccountPage.Home }
 
     when (page) {
-        AccountPage.Home -> AccountHome(state, themeMode, onThemeModeChange, onOpen = { page = it })
+        AccountPage.Home -> AccountHome(state, themeMode, onThemeModeChange, appStyle, onAppStyleChange, onOpen = { page = it })
         AccountPage.Categories -> ManageCategoriesScreen(state, onBack = { page = AccountPage.Home })
         AccountPage.Bin -> RecycleBinScreen(state, onBack = { page = AccountPage.Home })
         AccountPage.About -> AboutScreen(onBack = { page = AccountPage.Home })
@@ -105,6 +112,8 @@ private fun AccountHome(
     state: AppState,
     themeMode: ThemeMode,
     onThemeModeChange: (ThemeMode) -> Unit,
+    appStyle: AppStyle,
+    onAppStyleChange: (AppStyle) -> Unit,
     onOpen: (AccountPage) -> Unit
 ) {
     val context = LocalContext.current
@@ -122,18 +131,17 @@ private fun AccountHome(
     val photo by produceState<Bitmap?>(null, profile.photoVersion) {
         value = ProfileStore.loadPhoto(context)
     }
-    val pickPhoto = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-        if (uri != null) {
-            scope.launch {
-                if (ProfileStore.savePhoto(context, uri)) {
-                    saveProfile(profile.copy(photoVersion = System.currentTimeMillis()))
-                } else {
-                    Toast.makeText(context, "Couldn't open that picture", Toast.LENGTH_SHORT).show()
-                }
+    // Pick a photo, then crop it to a circle
+    val pickPhoto = rememberCircleCropPicker { cropped ->
+        scope.launch {
+            if (ProfileStore.savePhotoBitmap(context, cropped)) {
+                saveProfile(profile.copy(photoVersion = System.currentTimeMillis()))
+            } else {
+                Toast.makeText(context, "Couldn't save that picture", Toast.LENGTH_SHORT).show()
             }
         }
     }
-    fun choosePhoto() = pickPhoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+    fun choosePhoto() = pickPhoto()
 
     Column(
         Modifier
@@ -148,6 +156,7 @@ private fun AccountHome(
                 Modifier.weight(1f),
                 style = MaterialTheme.typography.headlineSmall
             )
+            ThemePickerButton(appStyle, onAppStyleChange)
             ThemeMenu(themeMode, onThemeModeChange)
         }
 
@@ -201,6 +210,9 @@ private fun AccountHome(
             )
         }
 
+        // ---------- App lock ----------
+        SecurityCard()
+
         // ---------- Backup and export ----------
         DataCard(state, onProfileReplaced = { profile = ProfileStore.load(context) })
 
@@ -232,6 +244,69 @@ private fun AccountHome(
                 saveProfile(profile.copy(name = name, dobUtcMillis = dob))
                 editing = false
             }
+        )
+    }
+}
+
+/** Palette button that opens the theme picker. */
+@Composable
+private fun ThemePickerButton(current: AppStyle, onChange: (AppStyle) -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    IconButton(onClick = { open = true }) {
+        Icon(painterResource(R.drawable.ic_palette), contentDescription = "Themes")
+    }
+    if (open) {
+        val dark = isAppDark()
+        AlertDialog(
+            onDismissRequest = { open = false },
+            title = { Text("Themes 🎨") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    for (style in AppStyle.entries) {
+                        val colors = colorSchemeFor(style, dark)
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(16.dp))
+                                .border(
+                                    if (style == current) 2.dp else 1.dp,
+                                    if (style == current) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                                    RoundedCornerShape(16.dp)
+                                )
+                                .clickable { onChange(style) }
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Mini preview: the style's background, a card and its accent colours
+                            Box(
+                                Modifier
+                                    .size(48.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(if (style == AppStyle.Glass) Color(0xFFB79CFF) else colors.background)
+                                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Box(
+                                    Modifier
+                                        .size(30.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(colors.surfaceContainerHighest)
+                                ) {
+                                    Box(Modifier.size(12.dp).clip(CircleShape).background(colors.primary).align(Alignment.TopStart))
+                                    Box(Modifier.size(12.dp).clip(CircleShape).background(colors.secondary).align(Alignment.BottomEnd))
+                                }
+                            }
+                            Spacer(Modifier.width(14.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text(style.label, fontWeight = FontWeight.SemiBold)
+                                Text(style.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            if (style == current) Text("✓", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleLarge)
+                        }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { open = false }) { Text("Done") } }
         )
     }
 }
@@ -283,11 +358,13 @@ private fun Avatar(photo: Bitmap?, name: String, size: Dp, onClick: () -> Unit) 
                 modifier = circle
             )
         } else {
-            Box(circle.background(MaterialTheme.colorScheme.primary), contentAlignment = Alignment.Center) {
-                Text(
-                    name.trim().take(1).uppercase().ifBlank { "?" },
-                    style = MaterialTheme.typography.displaySmall,
-                    color = MaterialTheme.colorScheme.onPrimary
+            // No photo yet: a simple line drawing of a person
+            Box(circle.background(Color.White.copy(alpha = 0.22f)), contentAlignment = Alignment.Center) {
+                Icon(
+                    painterResource(R.drawable.ic_avatar_placeholder),
+                    contentDescription = "No profile picture",
+                    tint = Color.White,
+                    modifier = Modifier.fillMaxSize(0.72f)
                 )
             }
         }

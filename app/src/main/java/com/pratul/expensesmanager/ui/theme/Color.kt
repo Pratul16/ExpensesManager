@@ -41,3 +41,11 @@ val OutlineDark = Color(0xFF7D7499)
 // Hero card gradients (white text sits on both)
 val HeroGradientLight = listOf(Color(0xFF7C3AED), Color(0xFFC026D3), Color(0xFFF43F5E))
 val HeroGradientDark = listOf(Color(0xFF5B21B6), Color(0xFF9D174D), Color(0xFFBE123C))
+
+// Hero gradients for the other styles
+val OceanGradientLight = listOf(Color(0xFF0284C7), Color(0xFF0891B2), Color(0xFF0D9488))
+val OceanGradientDark = listOf(Color(0xFF075985), Color(0xFF155E75), Color(0xFF115E59))
+val SunsetGradientLight = listOf(Color(0xFFF97316), Color(0xFFF43F5E), Color(0xFFDB2777))
+val SunsetGradientDark = listOf(Color(0xFF9A3412), Color(0xFF9F1239), Color(0xFF831843))
+// Glass: the brand gradient, slightly see-through so the colour wash behind shows
+val GlassGradient = listOf(Color(0xC77C3AED), Color(0xBFC026D3), Color(0xB8F43F5E))

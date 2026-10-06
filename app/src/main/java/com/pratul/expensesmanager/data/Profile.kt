@@ -60,6 +60,16 @@ object ProfileStore {
         }
     }
 
+    /** Saves an already-cropped photo (from the circle cropper). */
+    suspend fun savePhotoBitmap(context: Context, bitmap: Bitmap): Boolean = withContext(Dispatchers.IO) {
+        try {
+            photoFile(context).outputStream().use { bitmap.compress(Bitmap.CompressFormat.JPEG, 90, it) }
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     suspend fun loadPhoto(context: Context): Bitmap? = withContext(Dispatchers.IO) {
         val file = photoFile(context)
         if (file.exists()) BitmapFactory.decodeFile(file.path) else null

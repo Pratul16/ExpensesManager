@@ -13,6 +13,7 @@ object ExpenseStore {
     private const val KEY = "list"
     private const val CATALOG_KEY = "catalog"
     private const val BIN_KEY = "bin"
+    private const val LOANS_KEY = "loans"
 
     private fun prefs(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
@@ -53,6 +54,20 @@ object ExpenseStore {
             prefs(context).edit().putString("${BIN_KEY}_unreadable_${System.currentTimeMillis()}", text).apply()
             emptyList()
         }
+    }
+
+    fun loadLoans(context: Context): List<Loan> {
+        val text = prefs(context).getString(LOANS_KEY, "[]") ?: "[]"
+        return try {
+            LoanJson.fromJson(JSONArray(text))
+        } catch (e: Exception) {
+            prefs(context).edit().putString("${LOANS_KEY}_unreadable_${System.currentTimeMillis()}", text).apply()
+            emptyList()
+        }
+    }
+
+    fun saveLoans(context: Context, loans: List<Loan>) {
+        prefs(context).edit().putString(LOANS_KEY, LoanJson.toJson(loans).toString()).apply()
     }
 
     fun saveBin(context: Context, bin: List<BinEntry>) {
