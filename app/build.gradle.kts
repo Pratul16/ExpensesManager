@@ -21,8 +21,8 @@ android {
         applicationId = "com.pratul.expensesmanager"
         minSdk = 29
         targetSdk = 37
-        versionCode = 4
-        versionName = "1.2.1"
+        versionCode = 5
+        versionName = "1.2.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -44,6 +44,8 @@ android {
                 enable = true
             }
             signingConfig = signingConfigs.findByName("release")
+            // Include native crash symbols in the bundle, for readable crash reports in Play Console
+            ndk { debugSymbolLevel = "SYMBOL_TABLE" }
         }
         // Same as release (shrunk and optimised) but signed with the debug key and installed as a
         // separate app, so release behaviour can be tested next to the normal debug app.
