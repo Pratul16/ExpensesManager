@@ -1,15 +1,15 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 5.8
 import PackageDescription
 import AppleProductTypes
 
 let package = Package(
-    name: "Expenses Manager",
+    name: "ExpensesManager",
     platforms: [
         .iOS("16.0")
     ],
     products: [
         .iOSApplication(
-            name: "Expenses Manager",
+            name: "ExpensesManager",
             targets: ["AppModule"],
             bundleIdentifier: "com.pratul.expensesmanager",
             teamIdentifier: "",
@@ -24,8 +24,7 @@ let package = Package(
             supportedInterfaceOrientations: [
                 .portrait,
                 .landscapeRight,
-                .landscapeLeft,
-                .portraitUpsideDown
+                .landscapeLeft
             ],
             appCategory: .finance
         )
@@ -33,7 +32,7 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "AppModule",
-            path: "."
+            path: "Sources"
         )
     ]
 )
