@@ -178,7 +178,7 @@ class AppState(private val context: Context) {
         for (e in entry.expenses) ensure(e.category, listOfNotNull(e.item.ifBlank { null }))
         updateCatalog(newCatalog)
 
-        val usedIds = expenses.map { it.id }.toSet()
+        val usedIds = expenses.mapTo(HashSet()) { it.id }
         var nextId = newExpenseId()
         val restored = entry.expenses.map { if (it.id in usedIds) it.copy(id = nextId++) else it }
         updateExpenses(expenses + restored)
@@ -259,20 +259,20 @@ class AppState(private val context: Context) {
         updateCatalog(newCatalog)
 
         fun sameKey(e: Expense) = listOf(e.dateMillis, e.amount, e.category, e.item, e.note)
-        val existingKeys = expenses.map(::sameKey).toHashSet()
-        val usedIds = expenses.map { it.id }.toHashSet()
+        val existingKeys = expenses.mapTo(HashSet(), ::sameKey)
+        val usedIds = expenses.mapTo(HashSet()) { it.id }
         var nextId = newExpenseId()
         val added = backup.expenses
             .filter { existingKeys.add(sameKey(it)) }
             .map { if (usedIds.add(it.id)) it else it.copy(id = nextId++).also { e -> usedIds.add(e.id) } }
 
-        val binIds = bin.map { it.id }.toHashSet()
+        val binIds = bin.mapTo(HashSet()) { it.id }
         val addedBin = backup.bin.filter { it.id !in binIds }
         copyBills(backup, (added + addedBin.flatMap { it.expenses }).map { it.bill })
 
         updateExpenses(expenses + added)
         updateBin(bin + addedBin)
-        val loanIds = loans.map { it.id }.toHashSet()
+        val loanIds = loans.mapTo(HashSet()) { it.id }
         updateLoans(loans + backup.loans.filter { it.id !in loanIds })
         return added.size
     }

@@ -29,10 +29,13 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -62,12 +65,15 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pratul.expensesmanager.R
+import com.pratul.expensesmanager.auth.GoogleAuth
+import com.pratul.expensesmanager.auth.SignInResult
 import com.pratul.expensesmanager.data.Profile
 import com.pratul.expensesmanager.data.ProfileStore
 import com.pratul.expensesmanager.ui.components.AppBackground
@@ -81,7 +87,6 @@ object FirstRun {
     private const val PREFS = "settings"
     private const val KEY = "onboarded"
 
-    /** Done once shown, or for people who already had a profile before this screen existed. */
     fun isDone(context: Context): Boolean =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY, false) ||
                 ProfileStore.load(context).name.isNotBlank()
@@ -91,12 +96,8 @@ object FirstRun {
     }
 }
 
-private const val STEPS = 4 // welcome, name, birthday, photo
+private const val STEPS = 4
 
-/**
- * First-time profile setup, one question per screen. Everything is optional: "Skip" keeps whatever
- * was filled in so far and goes straight to the app.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OnboardingScreen(onDone: () -> Unit) {
@@ -104,14 +105,16 @@ fun OnboardingScreen(onDone: () -> Unit) {
     val scope = rememberCoroutineScope()
     var step by rememberSaveable { mutableIntStateOf(0) }
     var name by rememberSaveable { mutableStateOf("") }
+    var selectedGender by rememberSaveable { mutableStateOf<String?>(null) }
     var dob by rememberSaveable { mutableStateOf<Long?>(null) }
     var photo by remember { mutableStateOf<Bitmap?>(null) }
     var pickingDate by remember { mutableStateOf(false) }
 
     fun finish() {
         val hasPhoto = photo != null
-        if (name.isNotBlank() || dob != null || hasPhoto) {
-            ProfileStore.save(context, Profile(name.trim(), dob, if (hasPhoto) System.currentTimeMillis() else 0))
+        val fullName = if (selectedGender != null && name.isNotBlank()) "$name (${selectedGender?.take(1)})" else name.trim()
+        if (fullName.isNotBlank() || dob != null || hasPhoto) {
+            ProfileStore.save(context, Profile(fullName, dob, if (hasPhoto) System.currentTimeMillis() else 0))
         }
         onDone()
     }
@@ -132,7 +135,7 @@ fun OnboardingScreen(onDone: () -> Unit) {
                 .statusBarsPadding()
                 .navigationBarsPadding()
                 .imePadding()
-                .padding(horizontal = 24.dp, vertical = 16.dp)
+                .padding(horizontal = 20.dp, vertical = 14.dp)
         ) {
             // Progress and Skip
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -175,20 +178,58 @@ fun OnboardingScreen(onDone: () -> Unit) {
                 ) {
                     when (s) {
                         0 -> {
-                            BigEmoji("👋")
-                            StepTitle("Welcome to\nExpenses Manager")
-                            StepText("Let's set up your profile. It takes about 20 seconds, and you can change it any time.")
+                            StepTitle("Welcome to\nExpenses Manager 🚀")
+                            Spacer(Modifier.height(10.dp))
+
+                            // Features Card
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(20.dp),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
+                            ) {
+                                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    FeatureHighlight("📊", "Smart Expense Tracking", "Category & Item wise insights")
+                                    FeatureHighlight("📅", "Monthly Calendar Grid", "View daily spend amounts at a glance")
+                                    FeatureHighlight("🤖", "Google AI Assistant", "Voice commands in Hindi, English & Hinglish")
+                                    FeatureHighlight("🔒", "Tamper-Proof Lock", "Secure data with PIN or Fingerprint")
+                                    FeatureHighlight("💾", "Auto Daily Cloud Backup", "Never lose data even if app is deleted")
+                                }
+                            }
+
+                            Spacer(Modifier.height(14.dp))
+
+                            // Google Sign-In Button
+                            Button(
+                                onClick = {
+                                    scope.launch {
+                                        when (val result = GoogleAuth.signIn(context)) {
+                                            is SignInResult.Success -> {
+                                                name = result.account.name
+                                                step = 1
+                                            }
+                                            is SignInResult.Failed -> {
+                                                Toast.makeText(context, result.message, Toast.LENGTH_SHORT).show()
+                                            }
+                                            SignInResult.Cancelled -> Unit
+                                        }
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth().height(48.dp),
+                                shape = RoundedCornerShape(16.dp)
+                            ) {
+                                Text("Sign in with Google", fontWeight = FontWeight.Bold)
+                            }
                         }
                         1 -> {
                             BigEmoji("✍️")
                             StepTitle("What should we\ncall you?")
-                            Spacer(Modifier.height(24.dp))
+                            Spacer(Modifier.height(16.dp))
                             TextField(
                                 value = name,
                                 onValueChange = { name = it },
-                                placeholder = { Text("Your name", style = TextStyle(fontSize = 24.sp), modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) },
+                                placeholder = { Text("Your name", style = TextStyle(fontSize = 20.sp), modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) },
                                 singleLine = true,
-                                textStyle = TextStyle(fontSize = 24.sp, textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurface),
+                                textStyle = TextStyle(fontSize = 20.sp, textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurface),
                                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Next),
                                 colors = TextFieldDefaults.colors(
                                     focusedContainerColor = Color.Transparent,
@@ -196,6 +237,27 @@ fun OnboardingScreen(onDone: () -> Unit) {
                                 ),
                                 modifier = Modifier.fillMaxWidth()
                             )
+
+                            Spacer(Modifier.height(16.dp))
+                            Text("Gender (Optional)", style = MaterialTheme.typography.labelMedium)
+                            Spacer(Modifier.height(8.dp))
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                listOf("👨 Male", "👩 Female", "🧑 Other").forEach { g ->
+                                    val isSelected = selectedGender == g
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(50))
+                                            .background(if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
+                                            .clickable { selectedGender = g }
+                                            .padding(horizontal = 14.dp, vertical = 8.dp)
+                                    ) {
+                                        Text(
+                                            g,
+                                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
                         }
                         2 -> {
                             BigEmoji("🎂")
@@ -280,22 +342,34 @@ fun OnboardingScreen(onDone: () -> Unit) {
 }
 
 @Composable
+private fun FeatureHighlight(emoji: String, title: String, desc: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(emoji, fontSize = 20.sp)
+        Spacer(Modifier.width(10.dp))
+        Column {
+            Text(title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
+            Text(desc, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
 private fun BigEmoji(emoji: String) {
     Text(emoji, style = TextStyle(fontSize = 72.sp))
-    Spacer(Modifier.height(20.dp))
+    Spacer(Modifier.height(16.dp))
 }
 
 @Composable
 private fun StepTitle(text: String) {
-    Text(text, style = MaterialTheme.typography.displaySmall, textAlign = TextAlign.Center)
+    Text(text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
 }
 
 @Composable
 private fun StepText(text: String) {
-    Spacer(Modifier.height(12.dp))
+    Spacer(Modifier.height(10.dp))
     Text(
         text,
-        style = MaterialTheme.typography.bodyLarge,
+        style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center
     )

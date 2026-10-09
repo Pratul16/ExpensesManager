@@ -249,7 +249,7 @@ fun DonutWithLegend(
             slices = ring,
             centerTitle = centerTitle,
             centerValue = centerValue,
-            modifier = Modifier.size(210.dp),
+            modifier = Modifier.size(170.dp),
             selected = selected,
             highlighted = highlighted,
             total = legend.sumOf { it.value },
@@ -289,7 +289,7 @@ fun VerticalBarChart(
     bars: List<Bar>,
     modifier: Modifier = Modifier,
     highlightIndex: Int? = null,
-    barAreaHeight: Dp = 140.dp,
+    barAreaHeight: Dp = 112.dp,
     showValues: Boolean = true
 ) {
     val max = bars.maxOfOrNull { it.value }?.takeIf { it > 0 } ?: 1.0

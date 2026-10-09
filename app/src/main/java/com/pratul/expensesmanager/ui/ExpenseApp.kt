@@ -1,5 +1,6 @@
 package com.pratul.expensesmanager.ui
 
+import androidx.activity.compose.LocalActivity
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
@@ -50,7 +51,11 @@ import com.pratul.expensesmanager.data.AppStyle
 import com.pratul.expensesmanager.data.ThemeMode
 import com.pratul.expensesmanager.data.defaultEmojiFor
 import com.pratul.expensesmanager.ui.components.AddExpenseDialog
+import com.pratul.expensesmanager.ui.components.AppPromptsManager
+import com.pratul.expensesmanager.ui.components.BuyCoffeePromptDialog
 import com.pratul.expensesmanager.ui.components.ConfettiBurst
+import com.pratul.expensesmanager.ui.components.PlayStoreRatingDialog
+import com.pratul.expensesmanager.ui.components.PromptType
 import com.pratul.expensesmanager.ui.components.LocalCatalog
 import com.pratul.expensesmanager.ui.components.LocalQuickAdd
 import com.pratul.expensesmanager.ui.components.LocalSetBill
@@ -94,6 +99,15 @@ fun ExpenseApp(
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val haptics = LocalHapticFeedback.current
+    var activePrompt by remember { mutableStateOf<PromptType?>(null) }
+    val activity = LocalActivity.current
+
+    LaunchedEffect(Unit) {
+        val prompt = AppPromptsManager.shouldShowPrompt(context)
+        if (prompt != null) {
+            activePrompt = prompt
+        }
+    }
 
     // Tips through Google Play; connecting at start also completes tips approved while the app was closed
     val tipJar = remember { TipJar(context) }
@@ -192,7 +206,7 @@ fun ExpenseApp(
                     label = "tabs"
                 ) { shown ->
                     when (shown) {
-                        Tab.Month -> MonthScreen(state.expenses, onDelete = state::deleteExpense)
+                        Tab.Month -> MonthScreen(state.expenses, onAddExpense = state::addExpense, onDelete = state::deleteExpense)
                         Tab.Compare -> CompareScreen(state.expenses)
                         Tab.Yearly -> YearlyScreen(state.expenses)
                         Tab.Lend -> LendScreen(state, onAdd = { addingLoan = true })
@@ -252,6 +266,20 @@ fun ExpenseApp(
                         )
                     }
                 }
+            )
+        }
+
+        if (activePrompt == PromptType.Rating && activity != null) {
+            PlayStoreRatingDialog(
+                activity = activity,
+                onDismiss = { activePrompt = null }
+            )
+        }
+
+        if (activePrompt == PromptType.TipCoffee && activity != null) {
+            BuyCoffeePromptDialog(
+                activity = activity,
+                onDismiss = { activePrompt = null }
             )
         }
     }

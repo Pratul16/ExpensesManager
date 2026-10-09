@@ -26,7 +26,40 @@ data class BackupData(
     val billsDir: File? = null,
     /** Borrow & lend records (older backups have none). */
     val loans: List<Loan> = emptyList()
-)
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as BackupData
+
+        if (exportedAt != other.exportedAt) return false
+        if (expenses != other.expenses) return false
+        if (catalog != other.catalog) return false
+        if (bin != other.bin) return false
+        if (profile != other.profile) return false
+        if (photo != null) {
+            if (other.photo == null) return false
+            if (!photo.contentEquals(other.photo)) return false
+        } else if (other.photo != null) return false
+        if (billsDir != other.billsDir) return false
+        if (loans != other.loans) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = exportedAt.hashCode()
+        result = 31 * result + expenses.hashCode()
+        result = 31 * result + catalog.hashCode()
+        result = 31 * result + bin.hashCode()
+        result = 31 * result + profile.hashCode()
+        result = 31 * result + (photo?.contentHashCode() ?: 0)
+        result = 31 * result + (billsDir?.hashCode() ?: 0)
+        result = 31 * result + loans.hashCode()
+        return result
+    }
+}
 
 /**
  * Backup files (JSON, can be imported again) and spreadsheet exports (CSV, export only).

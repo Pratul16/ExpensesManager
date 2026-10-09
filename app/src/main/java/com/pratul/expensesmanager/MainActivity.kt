@@ -19,6 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.pratul.expensesmanager.data.ThemeMode
 import com.pratul.expensesmanager.data.ThemeSetting
+import com.pratul.expensesmanager.data.AutoBackupScheduler
 import com.pratul.expensesmanager.ui.ExpenseApp
 import com.pratul.expensesmanager.ui.components.AppBackground
 import com.pratul.expensesmanager.ui.lock.AppLockGate
@@ -26,12 +27,15 @@ import com.pratul.expensesmanager.ui.screens.FirstRun
 import com.pratul.expensesmanager.ui.screens.IntroScreen
 import com.pratul.expensesmanager.ui.screens.OnboardingScreen
 import com.pratul.expensesmanager.ui.theme.ExpensesManagerTheme
+import com.pratul.expensesmanager.util.CurrencySetting
 
 private enum class Stage { Intro, Onboarding, App }
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        CurrencySetting.load(this)
+        AutoBackupScheduler.schedule(this)
         enableEdgeToEdge()
         setContent {
             var themeMode by remember { mutableStateOf(ThemeSetting.load(this)) }

@@ -1,28 +1,66 @@
 package com.pratul.expensesmanager.util
 
+import android.content.Context
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
-fun formatMoney(amount: Double): String =
-    "₹" + String.format(Locale.getDefault(), "%,.2f", amount)
+data class Currency(val code: String, val symbol: String, val name: String, val flag: String)
 
-fun formatMoneyWhole(amount: Double): String =
-    "₹" + String.format(Locale.getDefault(), "%,.0f", amount)
+val topCurrencies = listOf(
+    Currency("INR", "₹", "Indian Rupee", "🇮🇳"),
+    Currency("USD", "$", "US Dollar", "🇺🇸"),
+    Currency("EUR", "€", "Euro", "🇪🇺"),
+    Currency("GBP", "£", "British Pound", "🇬🇧"),
+    Currency("JPY", "¥", "Japanese Yen", "🇯🇵"),
+    Currency("AUD", "A$", "Australian Dollar", "🇦🇺"),
+    Currency("CAD", "C$", "Canadian Dollar", "🇨🇦"),
+    Currency("CHF", "CHF", "Swiss Franc", "🇨🇭"),
+    Currency("CNY", "¥", "Chinese Yuan", "🇨🇳"),
+    Currency("SGD", "S$", "Singapore Dollar", "🇸🇬"),
+    Currency("AED", "AED", "UAE Dirham", "🇦🇪"),
+    Currency("SAR", "SAR", "Saudi Riyal", "🇸🇦"),
+    Currency("MYR", "RM", "Malaysian Ringgit", "🇲🇾"),
+    Currency("THB", "฿", "Thai Baht", "🇹🇭"),
+    Currency("BRL", "R$", "Brazilian Real", "🇧🇷")
+)
+
+object CurrencySetting {
+    private const val PREFS = "currency_settings"
+    private const val KEY = "selected_currency_symbol"
+    var currentSymbol: String = "₹"
+        private set
+
+    fun load(context: Context): String {
+        currentSymbol = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY, "₹") ?: "₹"
+        return currentSymbol
+    }
+
+    fun save(context: Context, symbol: String) {
+        currentSymbol = symbol
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY, symbol).apply()
+    }
+}
+
+fun formatMoney(amount: Double, symbol: String = CurrencySetting.currentSymbol): String =
+    symbol + String.format(Locale.getDefault(), "%,.2f", amount)
+
+fun formatMoneyWhole(amount: Double, symbol: String = CurrencySetting.currentSymbol): String =
+    symbol + String.format(Locale.getDefault(), "%,.0f", amount)
 
 /** Short labels for charts: ₹950, ₹12.5K, ₹3.2L, ₹1.1Cr */
-fun formatMoneyCompact(amount: Double): String {
+fun formatMoneyCompact(amount: Double, symbol: String = CurrencySetting.currentSymbol): String {
     fun short(value: Double, suffix: String): String {
         val text = String.format(Locale.getDefault(), "%.1f", value).removeSuffix(".0").removeSuffix(",0")
-        return "₹$text$suffix"
+        return "$symbol$text$suffix"
     }
     return when {
         amount >= 10_000_000 -> short(amount / 10_000_000, "Cr")
         amount >= 100_000 -> short(amount / 100_000, "L")
         amount >= 1_000 -> short(amount / 1_000, "K")
-        else -> "₹" + String.format(Locale.getDefault(), "%.0f", amount)
+        else -> symbol + String.format(Locale.getDefault(), "%.0f", amount)
     }
 }
 

@@ -63,6 +63,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import com.pratul.expensesmanager.util.Currency
+import com.pratul.expensesmanager.util.CurrencySetting
+import com.pratul.expensesmanager.util.topCurrencies
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -86,7 +90,7 @@ private enum class AccountPage { Home, Categories, Bin, About }
 
 // Google sign-in is hidden for the first Play Store release: the app works fully without it,
 // and it needs a Google Cloud client ID before it can work. Set to true once that is set up.
-private const val SHOW_GOOGLE_SIGN_IN = false
+private const val SHOW_GOOGLE_SIGN_IN = true
 
 @Composable
 fun AccountScreen(
@@ -212,6 +216,9 @@ private fun AccountHome(
 
         // ---------- App lock ----------
         SecurityCard()
+
+        // ---------- Currency ----------
+        CurrencyCard()
 
         // ---------- Backup and export ----------
         DataCard(state, onProfileReplaced = { profile = ProfileStore.load(context) })
@@ -528,4 +535,89 @@ private fun GoogleAccountCard(onSignedIn: (name: String) -> Unit) {
             }
         }
     }
+}
+
+@Composable
+private fun CurrencyCard() {
+    val context = LocalContext.current
+    var showCurrencyPicker by remember { mutableStateOf(false) }
+    var currentSymbol by remember { mutableStateOf(CurrencySetting.load(context)) }
+    val currentCurr = topCurrencies.firstOrNull { it.symbol == currentSymbol } ?: topCurrencies.first()
+
+    Card(Modifier.fillMaxWidth()) {
+        MenuRow(
+            icon = R.drawable.ic_palette,
+            title = "App Currency",
+            subtitle = "${currentCurr.flag} ${currentCurr.code} (${currentCurr.symbol}) · ${currentCurr.name}",
+            onClick = { showCurrencyPicker = true }
+        )
+    }
+
+    if (showCurrencyPicker) {
+        CurrencyPickerDialog(
+            currentSymbol = currentSymbol,
+            onSelect = { selected ->
+                currentSymbol = selected.symbol
+                CurrencySetting.save(context, selected.symbol)
+                showCurrencyPicker = false
+            },
+            onDismiss = { showCurrencyPicker = false }
+        )
+    }
+}
+
+@Composable
+private fun CurrencyPickerDialog(
+    currentSymbol: String,
+    onSelect: (Currency) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Select App Currency", fontWeight = FontWeight.Bold) },
+        text = {
+            Column(modifier = Modifier.fillMaxWidth().height(320.dp).verticalScroll(rememberScrollState())) {
+                topCurrencies.forEach { curr ->
+                    val isSelected = curr.symbol == currentSymbol
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(
+                                if (isSelected) MaterialTheme.colorScheme.primaryContainer
+                                else Color.Transparent
+                            )
+                            .clickable { onSelect(curr) }
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(curr.flag, fontSize = 22.sp)
+                        Spacer(Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                "${curr.code} (${curr.symbol})",
+                                fontWeight = FontWeight.SemiBold,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Text(
+                                curr.name,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        if (isSelected) {
+                            Icon(
+                                painterResource(R.drawable.ic_check),
+                                contentDescription = "Selected",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Close") }
+        }
+    )
 }

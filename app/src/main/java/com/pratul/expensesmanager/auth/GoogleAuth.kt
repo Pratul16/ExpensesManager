@@ -39,8 +39,9 @@ object GoogleAuth {
             return SignInResult.Failed("Google sign-in isn't set up yet: the web client ID is missing.")
         }
         val option = GetGoogleIdOption.Builder()
-            .setFilterByAuthorizedAccounts(false)
+            .setFilterByAuthorizedAccounts(filterByAuthorizedAccounts = false)
             .setServerClientId(activityContext.getString(R.string.google_web_client_id))
+            .setAutoSelectEnabled(false)
             .build()
         val request = GetCredentialRequest.Builder().addCredentialOption(option).build()
 
@@ -49,7 +50,7 @@ object GoogleAuth {
                 .getCredential(activityContext, request)
                 .credential
             if (credential is CustomCredential &&
-                credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
+                (credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL)
             ) {
                 val google = GoogleIdTokenCredential.createFrom(credential.data)
                 val account = GoogleAccount(name = google.displayName ?: google.id, email = google.id)
@@ -61,7 +62,7 @@ object GoogleAuth {
             } else {
                 SignInResult.Failed("Google returned an unexpected kind of sign-in.")
             }
-        } catch (e: GetCredentialCancellationException) {
+        } catch (_: GetCredentialCancellationException) {
             SignInResult.Cancelled
         } catch (e: NoCredentialException) {
             SignInResult.Failed("No Google account found on this phone. Add one in Settings and try again.")

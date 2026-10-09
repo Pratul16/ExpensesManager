@@ -144,9 +144,9 @@ fun GradientCard(modifier: Modifier = Modifier, content: @Composable ColumnScope
     Column(
         modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(28.dp))
+            .clip(RoundedCornerShape(22.dp))
             .background(heroBrush())
-            .padding(24.dp)
+            .padding(18.dp)
     ) {
         CompositionLocalProvider(LocalContentColor provides Color.White) { content() }
     }

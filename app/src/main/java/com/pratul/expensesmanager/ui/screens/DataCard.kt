@@ -26,6 +26,22 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.pratul.expensesmanager.R
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Switch
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.sp
+import com.pratul.expensesmanager.data.AutoBackupScheduler
+import com.pratul.expensesmanager.data.AutoBackupSettings
 import com.pratul.expensesmanager.data.Backup
 import com.pratul.expensesmanager.data.BackupData
 import com.pratul.expensesmanager.data.PdfReport
@@ -172,6 +188,37 @@ fun DataCard(state: AppState, onProfileReplaced: () -> Unit) {
             subtitle = "Excel (CSV) or PDF report, for any period",
             onClick = { exportOpen = true }
         )
+
+        // Auto Daily Backup Row
+        val isAutoBackupOn = AutoBackupSettings.isEnabled(context)
+        val (backupHour, backupMinute) = AutoBackupSettings.getBackupTime(context)
+        val lastAutoTime = AutoBackupSettings.getLastBackupTime(context)
+        var showTimePicker by remember { mutableStateOf(false) }
+
+        HorizontalDivider(Modifier.padding(start = 56.dp))
+        MenuRow(
+            icon = R.drawable.ic_timer,
+            title = "Daily Auto-Backup",
+            subtitle = if (isAutoBackupOn) "On · Scheduled daily at ${String.format("%02d:%02d", backupHour, backupMinute)}${if (lastAutoTime > 0) " · Last: ${formatDate(lastAutoTime)}" else ""}"
+                       else "Off · Tap to configure daily backup schedule",
+            onClick = { showTimePicker = true }
+        )
+
+        if (showTimePicker) {
+            AutoBackupTimeDialog(
+                currentHour = backupHour,
+                currentMinute = backupMinute,
+                isOn = isAutoBackupOn,
+                onToggle = { enabled ->
+                    AutoBackupSettings.setEnabled(context, enabled)
+                },
+                onSaveTime = { hour, minute ->
+                    AutoBackupSettings.setBackupTime(context, hour, minute)
+                    showTimePicker = false
+                },
+                onDismiss = { showTimePicker = false }
+            )
+        }
     }
 
     if (exportOpen) {
@@ -322,5 +369,82 @@ private fun ExportDialog(
         },
         confirmButton = {},
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+    )
+}
+
+@Composable
+private fun AutoBackupTimeDialog(
+    currentHour: Int,
+    currentMinute: Int,
+    isOn: Boolean,
+    onToggle: (Boolean) -> Unit,
+    onSaveTime: (Int, Int) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var enabled by remember { mutableStateOf(isOn) }
+    var hour by remember { mutableIntStateOf(currentHour) }
+    var minute by remember { mutableIntStateOf(currentMinute) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Auto-Backup Settings ⏰", fontWeight = FontWeight.Bold) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Daily Cloud & Local Backup", fontWeight = FontWeight.SemiBold)
+                    Switch(
+                        checked = enabled,
+                        onCheckedChange = {
+                            enabled = it
+                            onToggle(it)
+                        }
+                    )
+                }
+
+                if (enabled) {
+                    Text(
+                        "Backup Schedule Time:",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        listOf(2 to "2 AM", 0 to "12 AM", 6 to "6 AM", 22 to "10 PM").forEach { (h, label) ->
+                            val isSelected = hour == h
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
+                                    .clickable {
+                                        hour = h
+                                        onSaveTime(h, 0)
+                                    }
+                                    .padding(vertical = 8.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    label,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Done") }
+        }
     )
 }

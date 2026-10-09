@@ -2,7 +2,7 @@
     <string name="app_name">Expenses Manager</string>
     <!-- Web client ID from Google Cloud Console (APIs & Services > Credentials).
          Google sign-in stays disabled until this is filled in. -->
-    <string name="google_web_client_id" translatable="false">PASTE_YOUR_WEB_CLIENT_ID_HERE</string>
+    <string name="google_web_client_id" translatable="false">139834783915-uoq3pgno3qqt93n2bs842e2t2ek1cqa2.apps.googleusercontent.com</string>
 
     <!-- Shown on the "About & developer" page (Profile tab). Leave a value empty to hide its row. -->
     <string name="developer_name" translatable="false">Pratul</string>

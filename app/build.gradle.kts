@@ -21,8 +21,8 @@ android {
         applicationId = "com.pratul.expensesmanager"
         minSdk = 29
         targetSdk = 37
-        versionCode = 6
-        versionName = "1.3.0"
+        versionCode = 7
+        versionName = "1.4.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -79,6 +79,8 @@ dependencies {
     implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.googleid)
     implementation(libs.billing.ktx)
+    implementation(libs.play.review)
+    implementation(libs.androidx.work.runtime.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
